@@ -11,8 +11,8 @@
 -- Udacity FSND P3 forum discussion "swissPairings using only SQL query" posted by joshua_313208
 
 
---CREATE DATABASE tournament;
---\c tournament
+CREATE DATABASE tournament;
+\c tournament
 
 DROP TABLE IF EXISTS players, matches CASCADE;
 
