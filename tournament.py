@@ -79,23 +79,10 @@ def playerStandings():
         wins: the number of matches the player has won
         matches: the number of matches the player has played
     """
-
-    # I'll use subqueries (or views?) for the counts of wins and matches
-    # Need to fill the db with some test data and run a few queries
-    
-    # SUBQUERY METHOD
-    #num_wins = select count(wins) from 
-	#(select outcome from matches where outcome = "winner") 
-	#as wins
-    #num_matches = select count(rounds_played) from
-	#(select rounds from matches where players.id = matches.id
-	#as rounds_played
-
-# TO DO: create a view
     
     conn = connect()
     c = conn.cursor()
-    query = "select players.id, players.name, (select count(matches.outcome) from matches,players where players.id = matches.id and outcome = 'winner') as wins, (select count(matches.round) from matches,players where players.id = matches.id and outcome='winner' or outcome='loser') as matches from players order by wins desc, matches desc"
+    query = "SELECT * from standings"
     c.execute(query)
     player_records = c.fetchall()
     conn.commit()
@@ -114,7 +101,7 @@ def reportMatch(winner, loser):
     conn = connect()
     c = conn.cursor()
     query = "INSERT INTO matches (winner, loser) VALUES (%s, %s)"
-    data = ()
+    data = (winner, loser)
     c.execute(query, data)
     conn.commit()
     conn.close()
@@ -135,3 +122,12 @@ def swissPairings():
         id2: the second player's unique id
         name2: the second player's name
     """
+
+    conn = connect()
+    c = conn.cursor()
+    query = "SELECT evenRanks.id, evenRanks.name, oddRanks.id, oddRanks.name FROM evenRanks, oddRanks WHERE evenRanks.pairid = oddRanks.pairid"
+    c.execute(query)
+    pairings = c.fetchall()
+    conn.commit()
+    conn.close()
+    return pairings
