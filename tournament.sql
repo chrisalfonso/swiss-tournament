@@ -6,36 +6,46 @@
 -- You can write comments in this file by starting them with two dashes, like
 -- these lines here.
 
-CREATE DATABASE tournament;
-/c tournament
+-- REFERENCE(S): 
+-- Udacity FSND P3 forum discussion "problem with playerStandings" posted by abhishek_ghosh
+-- Udacity FSND P3 forum discussion "swissPairings using only SQL query" posted by joshua_313208
+
+
+--CREATE DATABASE tournament;
+--\c tournament
+
+DROP TABLE IF EXISTS players, matches CASCADE;
 
 CREATE TABLE players (
 	id serial PRIMARY KEY,
 	name text
 );
 
-CREATE TABLE matches (
-	id integer references players,
-	outcome text,
-	round integer
--- I think this table needs columns for 'winner' and 'loser' (just like the example 'results' table below)
-);
 
--- Got this from the forum: 'problem with playerStandings' (using it as a model for now)
-CREATE TABLE results (
+CREATE TABLE matches (
 	id serial PRIMARY KEY,
 	winner integer REFERENCES players(id) NOT NULL,
 	loser integer REFERENCES players(id) NOT NULL
 );
 
--- Get all winners
-CREATE VIEW num_wins AS
-SELECT id, count(matches.outcome) AS wins FROM matches
-WHERE outcome = 'winner'
-GROUP BY id ORDER BY wins desc;
+CREATE VIEW standings AS
+SELECT players.id, players.name, 
+(SELECT count(matches.winner) FROM matches WHERE players.id = matches.winner) AS wins, 
+(SELECT count(matches.id) FROM matches WHERE players.id = matches.winner OR players.id = matches.loser) AS matches
+FROM players order by wins desc, matches desc; 
 
--- Get number of rounds played
-CREATE VIEW num_matches AS
-SELECT id, count(matches.round) AS rounds_played FROM matches
-GROUP BY id;
+
+-- Add rank column to standings (Prefer to modify standings view but unit test allows only 4 columns in standings view)
+CREATE VIEW standingsRanks AS
+SELECT standings.*, row_number() OVER (ORDER BY wins DESC) AS rank FROM standings;
+
+-- Players with even-numbered ranks
+CREATE VIEW evenRanks AS
+SELECT id, name, rank, row_number() OVER (ORDER BY rank) AS pairID FROM standingsRanks 
+WHERE mod(rank, 2) = 0;
+
+-- Players with odd-numbered ranks
+CREATE VIEW oddRanks AS
+SELECT id, name, rank, row_number() OVER (ORDER BY rank) AS pairID FROM standingsRanks 
+WHERE mod(rank, 2) = 1;
 
